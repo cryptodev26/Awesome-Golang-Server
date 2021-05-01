@@ -1,0 +1,84 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+*.swp
+
+# Folders
+_obj
+_test
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+
+*.exe
+*.test
+
+# Executables
+algernon
+examples/a
+
+# Logs
+algernon.log
+http2.log
+
+# Leftovers
+.DS_Store
+dump.rdb
+bolt.db
+comments.json
+samples/getip/ip.md
+
+# Plugin executables
+plugins/go/go
+plugins/cpp/main
+
+# Extracted zip files
+apps/first
+apps/withplugins
+
+# Debugging
+algernon.debug
+
+# Profiling
+*.prof
+
+# Testing
+test.json
+
+# Generated files
+alg2docker/Dockerfile
+
+# Vendor backup
+_vendor-*/
+
+# Tracing
+trace.out
+
+# base64 encoded temporary output
+output.b64
+
+# logs
+*.log
+
+# profiling
+*.cpu
+*.mem
+
+# regression tests
+regtest/issue13/large-file
+
+# Visual Studio Code
+.vscode
+
+# gzip man page
+algernon.1.gz
