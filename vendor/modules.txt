@@ -40,11 +40,12 @@ github.com/chzyer/readline
 github.com/danwakefield/fnmatch
 # github.com/ddliu/go-httpclient v0.6.9
 github.com/ddliu/go-httpclient
-# github.com/denisenkom/go-mssqldb v0.10.0
+# github.com/denisenkom/go-mssqldb v0.12.0
 github.com/denisenkom/go-mssqldb
 github.com/denisenkom/go-mssqldb/internal/cp
 github.com/denisenkom/go-mssqldb/internal/decimal
 github.com/denisenkom/go-mssqldb/internal/querytext
+github.com/denisenkom/go-mssqldb/msdsn
 # github.com/didip/tollbooth v4.0.2+incompatible
 github.com/didip/tollbooth
 github.com/didip/tollbooth/errors
@@ -76,6 +77,8 @@ github.com/go-sourcemap/sourcemap/internal/base64vlq
 github.com/go-sql-driver/mysql
 # github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe
 github.com/golang-sql/civil
+# github.com/golang-sql/sqlexp v0.0.0-20170517235910-f1bb20e5a188
+github.com/golang-sql/sqlexp
 # github.com/golang/protobuf v1.5.1
 github.com/golang/protobuf/proto
 # github.com/gomodule/redigo v2.0.0+incompatible
@@ -230,12 +233,12 @@ golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/md4
 golang.org/x/crypto/poly1305
-# golang.org/x/net v0.0.0-20210420072503-d25e30425868
+# golang.org/x/net v0.0.0-20210610132358-84b48f89b13b
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20210420072515-93ed5bcd2bfe
+# golang.org/x/sys v0.0.0-20210423082822-04245dca01da
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
