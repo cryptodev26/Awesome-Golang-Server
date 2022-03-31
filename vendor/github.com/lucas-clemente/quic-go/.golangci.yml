@@ -1,7 +1,6 @@
 run:
   skip-files:
-    - internal/handshake/client_session_state.go
-    - internal/handshake/unsafe_test.go
+    - internal/qtls/structs_equal_test.go
 
 linters-settings:
   depguard:
@@ -22,7 +21,6 @@ linters:
     - depguard
     - exhaustive
     - exportloopref
-    - goconst
     - goimports
     - gofmt # redundant, since gofmt *should* be a no-op after gofumpt
     - gofumpt
@@ -42,9 +40,6 @@ linters:
 
 issues:
   exclude-rules:
-    - path: qlog/
-      linters:
-        - goconst
     - path: internal/qtls
       linters:
         - depguard
