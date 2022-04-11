@@ -12,12 +12,9 @@ require (
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
 	github.com/go-gcfg/gcfg v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/golang/mock v1.5.0 // indirect
-	github.com/golang/protobuf v1.5.1 // indirect
 	github.com/jvatic/goja-babel v0.0.0-20210308004931-b9e24388e7b1
 	github.com/lib/pq v1.10.0
-	github.com/lucas-clemente/quic-go v0.19.2
-	github.com/marten-seemann/qtls-go1-15 v0.1.4 // indirect
+	github.com/lucas-clemente/quic-go v0.27.0
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
@@ -56,8 +53,7 @@ require (
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
-	golang.org/x/net v0.0.0-20210420072503-d25e30425868
-	golang.org/x/sys v0.0.0-20210420072515-93ed5bcd2bfe // indirect
+	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
