@@ -6,7 +6,7 @@ require (
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/ddliu/go-httpclient v0.6.9
-	github.com/denisenkom/go-mssqldb v0.10.0
+	github.com/denisenkom/go-mssqldb v0.12.2
 	github.com/didip/tollbooth v4.0.2+incompatible
 	github.com/dop251/goja v0.0.0-20210406175830-1b11a6af686d // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385
@@ -56,8 +56,7 @@ require (
 	github.com/yosssi/gcss v0.1.0
 	go.etcd.io/bbolt v1.3.5 // indirect
 	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
-	golang.org/x/net v0.0.0-20210420072503-d25e30425868
-	golang.org/x/sys v0.0.0-20210420072515-93ed5bcd2bfe // indirect
+	golang.org/x/net v0.0.0-20210610132358-84b48f89b13b
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
