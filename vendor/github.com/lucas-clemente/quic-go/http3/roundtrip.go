@@ -1,6 +1,7 @@
 package http3
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	quic "github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go"
 
 	"golang.org/x/net/http/httpguts"
 )
@@ -41,10 +42,15 @@ type RoundTripper struct {
 	// If nil, reasonable default values will be used.
 	QuicConfig *quic.Config
 
+	// Enable support for HTTP/3 datagrams.
+	// If set to true, QuicConfig.EnableDatagram will be set.
+	// See https://www.ietf.org/archive/id/draft-schinazi-masque-h3-datagram-02.html.
+	EnableDatagrams bool
+
 	// Dial specifies an optional dial function for creating QUIC
 	// connections for requests.
-	// If Dial is nil, quic.DialAddr will be used.
-	Dial func(network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlySession, error)
+	// If Dial is nil, quic.DialAddrEarlyContext will be used.
+	Dial func(ctx context.Context, network, addr string, tlsCfg *tls.Config, cfg *quic.Config) (quic.EarlyConnection, error)
 
 	// MaxResponseHeaderBytes specifies a limit on how many response bytes are
 	// allowed in the server's response header.
@@ -56,10 +62,8 @@ type RoundTripper struct {
 
 // RoundTripOpt are options for the Transport.RoundTripOpt method.
 type RoundTripOpt struct {
-	// OnlyCachedConn controls whether the RoundTripper may
-	// create a new QUIC connection. If set true and
-	// no cached connection is available, RoundTrip
-	// will return ErrNoCachedConn.
+	// OnlyCachedConn controls whether the RoundTripper may create a new QUIC connection.
+	// If set true and no cached connection is available, RoundTrip will return ErrNoCachedConn.
 	OnlyCachedConn bool
 }
 
@@ -135,6 +139,7 @@ func (r *RoundTripper) getClient(hostname string, onlyCached bool) (http.RoundTr
 			hostname,
 			r.TLSClientConfig,
 			&roundTripperOpts{
+				EnableDatagram:     r.EnableDatagrams,
 				DisableCompression: r.DisableCompression,
 				MaxHeaderBytes:     r.MaxResponseHeaderBytes,
 			},
