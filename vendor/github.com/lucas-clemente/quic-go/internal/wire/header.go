@@ -2,12 +2,14 @@ package wire
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
+	"github.com/lucas-clemente/quic-go/quicvarint"
 )
 
 // ParseConnectionID parses the destination connection ID of a packet.
@@ -40,6 +42,25 @@ func IsVersionNegotiationPacket(b []byte) bool {
 		return false
 	}
 	return b[0]&0x80 > 0 && b[1] == 0 && b[2] == 0 && b[3] == 0 && b[4] == 0
+}
+
+// Is0RTTPacket says if this is a 0-RTT packet.
+// A packet sent with a version we don't understand can never be a 0-RTT packet.
+func Is0RTTPacket(b []byte) bool {
+	if len(b) < 5 {
+		return false
+	}
+	if b[0]&0x80 == 0 {
+		return false
+	}
+	version := protocol.VersionNumber(binary.BigEndian.Uint32(b[1:5]))
+	if !protocol.IsSupportedVersion(protocol.SupportedVersions, version) {
+		return false
+	}
+	if version == protocol.Version2 {
+		return b[0]>>4&0b11 == 0b10
+	}
+	return b[0]>>4&0b11 == 0b01
 }
 
 var ErrUnsupportedVersion = errors.New("unsupported version")
@@ -162,15 +183,28 @@ func (h *Header) parseLongHeader(b *bytes.Reader) error {
 		return ErrUnsupportedVersion
 	}
 
-	switch (h.typeByte & 0x30) >> 4 {
-	case 0x0:
-		h.Type = protocol.PacketTypeInitial
-	case 0x1:
-		h.Type = protocol.PacketType0RTT
-	case 0x2:
-		h.Type = protocol.PacketTypeHandshake
-	case 0x3:
-		h.Type = protocol.PacketTypeRetry
+	if h.Version == protocol.Version2 {
+		switch h.typeByte >> 4 & 0b11 {
+		case 0b00:
+			h.Type = protocol.PacketTypeRetry
+		case 0b01:
+			h.Type = protocol.PacketTypeInitial
+		case 0b10:
+			h.Type = protocol.PacketType0RTT
+		case 0b11:
+			h.Type = protocol.PacketTypeHandshake
+		}
+	} else {
+		switch h.typeByte >> 4 & 0b11 {
+		case 0b00:
+			h.Type = protocol.PacketTypeInitial
+		case 0b01:
+			h.Type = protocol.PacketType0RTT
+		case 0b10:
+			h.Type = protocol.PacketTypeHandshake
+		case 0b11:
+			h.Type = protocol.PacketTypeRetry
+		}
 	}
 
 	if h.Type == protocol.PacketTypeRetry {
@@ -187,7 +221,7 @@ func (h *Header) parseLongHeader(b *bytes.Reader) error {
 	}
 
 	if h.Type == protocol.PacketTypeInitial {
-		tokenLen, err := utils.ReadVarInt(b)
+		tokenLen, err := quicvarint.Read(b)
 		if err != nil {
 			return err
 		}
@@ -200,7 +234,7 @@ func (h *Header) parseLongHeader(b *bytes.Reader) error {
 		}
 	}
 
-	pl, err := utils.ReadVarInt(b)
+	pl, err := quicvarint.Read(b)
 	if err != nil {
 		return err
 	}

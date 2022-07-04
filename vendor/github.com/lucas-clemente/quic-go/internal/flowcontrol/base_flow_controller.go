@@ -15,12 +15,15 @@ type baseFlowController struct {
 	lastBlockedAt protocol.ByteCount
 
 	// for receiving data
+	//nolint:structcheck // The mutex is used both by the stream and the connection flow controller
 	mutex                sync.Mutex
 	bytesRead            protocol.ByteCount
 	highestReceived      protocol.ByteCount
 	receiveWindow        protocol.ByteCount
 	receiveWindowSize    protocol.ByteCount
 	maxReceiveWindowSize protocol.ByteCount
+
+	allowWindowIncrease func(size protocol.ByteCount) bool
 
 	epochStartTime   time.Time
 	epochStartOffset protocol.ByteCount
@@ -44,8 +47,7 @@ func (c *baseFlowController) AddBytesSent(n protocol.ByteCount) {
 	c.bytesSent += n
 }
 
-// UpdateSendWindow should be called after receiving a WindowUpdateFrame
-// it returns true if the window was actually updated
+// UpdateSendWindow is be called after receiving a MAX_{STREAM_}DATA frame.
 func (c *baseFlowController) UpdateSendWindow(offset protocol.ByteCount) {
 	if offset > c.sendWindow {
 		c.sendWindow = offset
@@ -60,10 +62,8 @@ func (c *baseFlowController) sendWindowSize() protocol.ByteCount {
 	return c.sendWindow - c.bytesSent
 }
 
-func (c *baseFlowController) AddBytesRead(n protocol.ByteCount) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
+// needs to be called with locked mutex
+func (c *baseFlowController) addBytesRead(n protocol.ByteCount) {
 	// pretend we sent a WindowUpdate when reading the first byte
 	// this way auto-tuning of the window size already works for the first WindowUpdate
 	if c.bytesRead == 0 {
@@ -107,7 +107,10 @@ func (c *baseFlowController) maybeAdjustWindowSize() {
 	now := time.Now()
 	if now.Sub(c.epochStartTime) < time.Duration(4*fraction*float64(rtt)) {
 		// window is consumed too fast, try to increase the window size
-		c.receiveWindowSize = utils.MinByteCount(2*c.receiveWindowSize, c.maxReceiveWindowSize)
+		newSize := utils.MinByteCount(2*c.receiveWindowSize, c.maxReceiveWindowSize)
+		if newSize > c.receiveWindowSize && (c.allowWindowIncrease == nil || c.allowWindowIncrease(newSize-c.receiveWindowSize)) {
+			c.receiveWindowSize = newSize
+		}
 	}
 	c.startNewAutoTuningEpoch(now)
 }

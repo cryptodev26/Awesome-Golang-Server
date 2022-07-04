@@ -3,17 +3,18 @@ package http3
 import (
 	"bufio"
 	"bytes"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/lucas-clemente/quic-go"
 	"github.com/lucas-clemente/quic-go/internal/utils"
 	"github.com/marten-seemann/qpack"
 )
 
 type responseWriter struct {
-	stream *bufio.Writer
+	conn        quic.Connection
+	bufferedStr *bufio.Writer
 
 	header        http.Header
 	status        int // status code passed to WriteHeader
@@ -25,13 +26,15 @@ type responseWriter struct {
 var (
 	_ http.ResponseWriter = &responseWriter{}
 	_ http.Flusher        = &responseWriter{}
+	_ Hijacker            = &responseWriter{}
 )
 
-func newResponseWriter(stream io.Writer, logger utils.Logger) *responseWriter {
+func newResponseWriter(str quic.Stream, conn quic.Connection, logger utils.Logger) *responseWriter {
 	return &responseWriter{
-		header: http.Header{},
-		stream: bufio.NewWriter(stream),
-		logger: logger,
+		header:      http.Header{},
+		conn:        conn,
+		bufferedStr: bufio.NewWriter(str),
+		logger:      logger,
 	}
 }
 
@@ -43,7 +46,10 @@ func (w *responseWriter) WriteHeader(status int) {
 	if w.headerWritten {
 		return
 	}
-	w.headerWritten = true
+
+	if status < 100 || status >= 200 {
+		w.headerWritten = true
+	}
 	w.status = status
 
 	var headers bytes.Buffer
@@ -59,11 +65,14 @@ func (w *responseWriter) WriteHeader(status int) {
 	buf := &bytes.Buffer{}
 	(&headersFrame{Length: uint64(headers.Len())}).Write(buf)
 	w.logger.Infof("Responding with %d", status)
-	if _, err := w.stream.Write(buf.Bytes()); err != nil {
+	if _, err := w.bufferedStr.Write(buf.Bytes()); err != nil {
 		w.logger.Errorf("could not write headers frame: %s", err.Error())
 	}
-	if _, err := w.stream.Write(headers.Bytes()); err != nil {
+	if _, err := w.bufferedStr.Write(headers.Bytes()); err != nil {
 		w.logger.Errorf("could not write header frame payload: %s", err.Error())
+	}
+	if !w.headerWritten {
+		w.Flush()
 	}
 }
 
@@ -77,16 +86,20 @@ func (w *responseWriter) Write(p []byte) (int, error) {
 	df := &dataFrame{Length: uint64(len(p))}
 	buf := &bytes.Buffer{}
 	df.Write(buf)
-	if _, err := w.stream.Write(buf.Bytes()); err != nil {
+	if _, err := w.bufferedStr.Write(buf.Bytes()); err != nil {
 		return 0, err
 	}
-	return w.stream.Write(p)
+	return w.bufferedStr.Write(p)
 }
 
 func (w *responseWriter) Flush() {
-	if err := w.stream.Flush(); err != nil {
+	if err := w.bufferedStr.Flush(); err != nil {
 		w.logger.Errorf("could not flush to stream: %s", err.Error())
 	}
+}
+
+func (w *responseWriter) StreamCreator() StreamCreator {
+	return w.conn
 }
 
 // copied from http2/http2.go

@@ -8,6 +8,7 @@ import (
 
 	"github.com/lucas-clemente/quic-go/internal/protocol"
 	"github.com/lucas-clemente/quic-go/internal/utils"
+	"github.com/lucas-clemente/quic-go/quicvarint"
 )
 
 // ErrInvalidReservedBits is returned when the reserved bits are incorrect.
@@ -126,18 +127,32 @@ func (h *ExtendedHeader) Write(b *bytes.Buffer, ver protocol.VersionNumber) erro
 	return h.writeShortHeader(b, ver)
 }
 
-func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, _ protocol.VersionNumber) error {
+func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, version protocol.VersionNumber) error {
 	var packetType uint8
-	//nolint:exhaustive
-	switch h.Type {
-	case protocol.PacketTypeInitial:
-		packetType = 0x0
-	case protocol.PacketType0RTT:
-		packetType = 0x1
-	case protocol.PacketTypeHandshake:
-		packetType = 0x2
-	case protocol.PacketTypeRetry:
-		packetType = 0x3
+	if version == protocol.Version2 {
+		//nolint:exhaustive
+		switch h.Type {
+		case protocol.PacketTypeInitial:
+			packetType = 0b01
+		case protocol.PacketType0RTT:
+			packetType = 0b10
+		case protocol.PacketTypeHandshake:
+			packetType = 0b11
+		case protocol.PacketTypeRetry:
+			packetType = 0b00
+		}
+	} else {
+		//nolint:exhaustive
+		switch h.Type {
+		case protocol.PacketTypeInitial:
+			packetType = 0b00
+		case protocol.PacketType0RTT:
+			packetType = 0b01
+		case protocol.PacketTypeHandshake:
+			packetType = 0b10
+		case protocol.PacketTypeRetry:
+			packetType = 0b11
+		}
 	}
 	firstByte := 0xc0 | packetType<<4
 	if h.Type != protocol.PacketTypeRetry {
@@ -158,10 +173,10 @@ func (h *ExtendedHeader) writeLongHeader(b *bytes.Buffer, _ protocol.VersionNumb
 		b.Write(h.Token)
 		return nil
 	case protocol.PacketTypeInitial:
-		utils.WriteVarInt(b, uint64(len(h.Token)))
+		quicvarint.Write(b, uint64(len(h.Token)))
 		b.Write(h.Token)
 	}
-	utils.WriteVarIntWithLen(b, uint64(h.Length), 2)
+	quicvarint.WriteWithLen(b, uint64(h.Length), 2)
 	return h.writePacketNumber(b)
 }
 
@@ -202,7 +217,7 @@ func (h *ExtendedHeader) GetLength(v protocol.VersionNumber) protocol.ByteCount 
 	if h.IsLongHeader {
 		length := 1 /* type byte */ + 4 /* version */ + 1 /* dest conn ID len */ + protocol.ByteCount(h.DestConnectionID.Len()) + 1 /* src conn ID len */ + protocol.ByteCount(h.SrcConnectionID.Len()) + protocol.ByteCount(h.PacketNumberLen) + 2 /* length */
 		if h.Type == protocol.PacketTypeInitial {
-			length += utils.VarIntLen(uint64(len(h.Token))) + protocol.ByteCount(len(h.Token))
+			length += quicvarint.Len(uint64(len(h.Token))) + protocol.ByteCount(len(h.Token))
 		}
 		return length
 	}
